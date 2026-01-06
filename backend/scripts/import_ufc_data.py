@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from backend.app.database import SessionLocal, engine, Base
 from backend.app import models
 from backend.app.crud.fighters import upsert_fighter
+from backend.app.crud.events import upsert_event
+from backend.app.crud.fights import insert_fight
 
 
 # Create tables
@@ -34,6 +36,7 @@ def import_data(fighters_file, nicknames_file, events_file, fights_file):
         reader = csv.DictReader(f)
         for row in reader:
            fighter_data = {
+               "url": clean_csv_value(row.get("URL")),
                "name": clean_csv_value(row.get("FIGHTER")),
                "nickname": None,
                "height": clean_csv_value(row.get("HEIGHT")),
@@ -44,7 +47,7 @@ def import_data(fighters_file, nicknames_file, events_file, fights_file):
                 "record": None
            }
            fighter = upsert_fighter(db, fighter_data)
-           fighters_dict[fighter.name] = fighter
+           fighters_dict[fighter.url] = fighter
 
     # Update nicknames
     with open(nicknames_file, newline="", encoding="utf-8") as f:
@@ -64,12 +67,12 @@ def import_data(fighters_file, nicknames_file, events_file, fights_file):
         reader = csv.DictReader(f)
         for row in reader:
             name = clean_csv_value(row.get("EVENT"))
-            event = models.Event(
-                name = name,
-                date=clean_csv_value(row.get("DATE")),
-                location=clean_csv_value(row.get("LOCATION"))
-            )
-            db.add(event)
+            event_data = {
+                "name": name,
+                "date": clean_csv_value(row.get("DATE")),
+                "location": clean_csv_value(row.get("LOCATION"))
+            }
+            event = upsert_event(db, event_data)
             events_dict[name] = event
     db.commit()
 
@@ -90,18 +93,18 @@ def import_data(fighters_file, nicknames_file, events_file, fights_file):
             if not event:
                 continue
 
-            fight = models.Fight(
-                fighter1_id=fighter1.id,
-                fighter2_id=fighter2.id,
-                fighter1_outcome=f1_outcome,
-                fighter2_outcome=f2_outcome,
-                weightclass=clean_csv_value(row.get("WEIGHTCLASS")),
-                method=clean_csv_value(row.get("METHOD")),
-                round=clean_csv_value(row.get("ROUND")),
-                time=clean_csv_value(row.get("TIME")),
-                event_id=event.id
-            )
-            db.add(fight)
+            fight_data = {
+                "fighter1_id": fighter1.id,
+                "fighter2_id": fighter2.id,
+                "fighter1_outcome": f1_outcome,
+                "fighter2_outcome": f2_outcome,
+                "weightclass": clean_csv_value(row.get("WEIGHTCLASS")),
+                "method": clean_csv_value(row.get("METHOD")),
+                "round": clean_csv_value(row.get("ROUND")),
+                "time": clean_csv_value(row.get("TIME")),
+                "event_id": event.id
+            }
+            insert_fight(db, fight_data)
 
     db.commit()
     db.close()

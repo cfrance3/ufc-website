@@ -1,7 +1,8 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
 class FighterBase(BaseModel):
+    url: str
     name: str
     nickname: Optional[str] = None
     height: Optional[str] = None
@@ -13,8 +14,8 @@ class FighterBase(BaseModel):
 
 class Fighter(FighterBase):
     id: int
-    class Config:
-        orm_mode = True
+    
+    model_config = ConfigDict(from_attributes=True)
 
 class EventBase(BaseModel):
     name: str
@@ -23,8 +24,8 @@ class EventBase(BaseModel):
 
 class Event(EventBase):
     id: int
-    class Config:
-        orm_mode = True
+    
+    model_config = ConfigDict(from_attributes=True)
 
 class FightBase(BaseModel):
     fighter1_outcome: str
@@ -39,5 +40,5 @@ class Fight(FightBase):
     fighter1: Fighter
     fighter2: Fighter
     event: Event
-    class Config:
-        orm_mode = True
+    
+    model_config = ConfigDict(from_attributes=True)
