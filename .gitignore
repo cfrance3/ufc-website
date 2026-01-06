@@ -4,4 +4,3 @@ venv/
 *.db
 venv/
 .vscode/
-backend/data/
