@@ -5,3 +5,5 @@ venv/
 venv/
 .vscode/
 backend/data/
+cleaning_info.txt
+*.log
