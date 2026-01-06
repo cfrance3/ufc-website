@@ -115,5 +115,6 @@ if __name__ == "__main__":
         fighters_file="backend/data/fighters.csv",
         nicknames_file="backend/data/nicknames.csv",
         events_file="backend/data/events.csv",
-        fights_file="backend/data/fights.csv"
+        fights_file="backend/data/fights.csv",
+        stats_file="backend/data/stats.csv"
     )
