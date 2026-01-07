@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
+from typing import List, Optional
 
 class FighterBase(BaseModel):
     url: str
@@ -67,4 +67,44 @@ class Fight(FightBase):
     fighter2: Fighter
     event: Event
     
+    model_config = ConfigDict(from_attributes=True)
+
+class FightStatsRound(BaseModel):
+    id: int
+    round_number: int
+    sig_strikes: Optional[int] = None
+    sig_strike_percent: Optional[int] = None
+    total_strikes: Optional[int] = None
+    takedowns: Optional[int] = None
+    takedown_percent: Optional[int] = None
+    submissions_attempted: Optional[int] = None
+    reversals: Optional[int] = None
+    control_time_seconds: Optional[int] = None
+    strikes_head: Optional[int] = None
+    strikes_body: Optional[int] = None
+    strikes_leg: Optional[int] = None
+    strikes_distance: Optional[int] = None
+    strikes_clinch: Optional[int] = None
+    strikes_ground: Optional[int] = None
+    knockdowns: Optional[int] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+class FightStatsBase(BaseModel):
+    fighter_id: int
+    fight_id: int
+
+class FightStats(FightStatsBase):
+    id: int
+    fighter: FighterLite
+    fight: FightLite
+    rounds: List[FightStatsRound] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+class FightStatsLite(FightStatsBase):
+    id: int
+    rounds: int
+    fighter: FighterLite
+
     model_config = ConfigDict(from_attributes=True)
