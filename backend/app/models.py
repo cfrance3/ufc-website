@@ -36,7 +36,7 @@ class Fight(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     fighter1_id = Column(Integer, ForeignKey("fighters.id", ondelete="CASCADE"), index=True)
-    fighter2_id = Column(Integer, ForeignKey("fighters.id", ondelete="CACADE"), index=True)
+    fighter2_id = Column(Integer, ForeignKey("fighters.id", ondelete="CASCADE"), index=True)
     fighter1_outcome = Column(String)
     fighter2_outcome = Column(String)
     weightclass = Column(String)
@@ -55,14 +55,14 @@ class FightStats(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     fight_id = Column(Integer, ForeignKey("fights.id", ondelete="CASCADE"), nullable=False)
-    fighter_id = Column(Integer, ForeignKey("fighters.id"), ondelete="CASCADE", nullable=False)
+    fighter_id = Column(Integer, ForeignKey("fighters.id", ondelete="CASCADE"), nullable=False)
 
     fighter = relationship("Fighter", back_populates="fight_stats")
     fight = relationship("Fight", back_populates="fight_stats")
     rounds = relationship("FightStatsRound", back_populates="fight_stats", cascade="all, delete-orphan")
 
     __table_args__ = (
-        UniqueConstraint('fight_id', 'fighter_id', name='_fight_fighter_uc')
+        UniqueConstraint('fight_id', 'fighter_id', name='_fight_fighter_uc'),
     )
 
 class FightStatsRound(Base):
@@ -91,6 +91,6 @@ class FightStatsRound(Base):
     fight_stats = relationship("FightStats", back_populates="rounds")
 
     __table_args__ = (
-        UniqueConstraint('fight_stats_id', 'round_number', name='_fightstats_round_uc')
+        UniqueConstraint('fight_stats_id', 'round_number', name='_fightstats_round_uc'),
     )
 
