@@ -6,7 +6,7 @@ from backend.app.database import SessionLocal, engine, Base
 from collections import defaultdict
 import unicodedata
 from backend.app.scraper import scrape_fighters_from_fight
-from backend.app.crud.fighters import upsert_fighter
+from backend.app.crud.fighters import upsert_fighter, update_fighter
 from backend.app.crud.events import upsert_event
 from backend.app.crud.fights import insert_fight
 
@@ -115,7 +115,7 @@ def import_data(fighters_file, nicknames_file, events_file, fights_file, stats_f
             if norm:
                 name_to_urls[norm].append(fighter.url)
            
-    db.commit()
+    db.flush()
                
     # Add known name -> url mappings from JSON
     scraped_map_path = Path("backend/data/scraped_fighter_name_map.json")
@@ -140,9 +140,9 @@ def import_data(fighters_file, nicknames_file, events_file, fights_file, stats_f
             
             if fighter_url in fighters_dict and nickname:
                 fighter = fighters_dict[fighter_url]
-                fighter.nickname = nickname
-                db.add(fighter)
-    db.commit()
+                fighter_data = {"nickname": nickname}
+                update_fighter(db, fighter.id, fighter_data)
+    db.flush()
 
     # Import events
     events_dict = {} # key = event name
@@ -157,7 +157,7 @@ def import_data(fighters_file, nicknames_file, events_file, fights_file, stats_f
             }
             event = upsert_event(db, event_data)
             events_dict[name] = event
-    db.commit()
+    db.flush()
 
     # Load previously scraped fight URL map
     scraped_fight_map_path = Path("backend/data/scraped_fight_url_map.json")
@@ -282,9 +282,10 @@ def import_data(fighters_file, nicknames_file, events_file, fights_file, stats_f
                 elif outcome == "draw":
                     draws += 1
 
-                fighter.record = f"{wins}-{losses}-{draws}"
-                db.add(fighter)
-    db.commit()
+                record = f"{wins}-{losses}-{draws}"
+                fighter_data = {"record": record}
+                update_fighter(db, fighter.id, fighter_data)
+    db.flush()
 
     output_fighter_path = Path("backend/data/scraped_fighter_name_map.json")
 
@@ -303,7 +304,7 @@ def import_data(fighters_file, nicknames_file, events_file, fights_file, stats_f
     logging.info(f"Wrote scraped fight URL map to {output_fight_path}")
 
 
-
+    db.commit()
     db.close()
 
     
