@@ -6,4 +6,4 @@ venv/
 .vscode/
 backend/data/
 cleaning_info.txt
-*.log
+backend/logs/
