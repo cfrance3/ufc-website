@@ -1,7 +1,7 @@
 from typing import List
 from sqlalchemy.orm import Session
 from backend.app.models import Event
-from utils import apply_updates
+from backend.app.crud.utils import apply_updates
 
 def get_all_events(db: Session) -> List[Event]:
     return db.query(Event).filter(Event.is_deleted.is_(False)).all()
@@ -58,5 +58,10 @@ def update_event(db: Session, event_id: int, event_data: dict, *, restore: bool 
 
     return event
     
-
+def get_event_by_name(db: Session, event_name: str) -> Event | None:
+    return (
+        db.query(Event)
+        .filter(Event.name == event_name)
+        .first()
+    )
     

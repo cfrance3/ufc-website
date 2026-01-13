@@ -42,6 +42,7 @@ class Fight(Base):
     __immutable_fields__ = {"id", "fighter1_id", "fighter2_id", "event_id"}
 
     id = Column(Integer, primary_key=True, index=True)
+    bout_name = Column(String, nullable=False)
     fighter1_id = Column(Integer, ForeignKey("fighters.id", ondelete="CASCADE"), index=True)
     fighter2_id = Column(Integer, ForeignKey("fighters.id", ondelete="CASCADE"), index=True)
     fighter1_outcome = Column(String)

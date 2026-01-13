@@ -1,7 +1,6 @@
 from typing import List
 from sqlalchemy.orm import Session
 from backend.app.models import FightStatsRound, FightStats, Fight
-from utils import apply_updates
 
 def get_all_fight_stats_round(db: Session) -> List[FightStatsRound]:
     return db.query(FightStatsRound).join(FightStats).join(Fight).filter(Fight.is_deleted.is_(False)).all()

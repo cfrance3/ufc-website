@@ -1,7 +1,8 @@
 from typing import List
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
-from backend.app.models import Fighter
-from utils import apply_updates
+from backend.app.models import Fighter, Event, Fight
+from backend.app.crud.utils import apply_updates
 
 def get_all_fighters(db: Session) -> List[Fighter]:
     return db.query(Fighter).filter(Fighter.is_deleted.is_(False)).all()
@@ -60,3 +61,26 @@ def update_fighter(db: Session, fighter_id: int, fighter_data: dict, *, restore:
         fighter.is_deleted = False
 
     return fighter
+
+def get_fighter_by_url(db: Session, fighter_url: str) -> Fighter | None:
+    return db.query(Fighter).filter(Fighter.url == fighter_url, Fighter.is_deleted.is_(False)).first()
+
+def get_fighter_by_name_and_event(db: Session, fighter_name: str, event_name: str) -> List[Fighter] | None:
+    return (
+        db.query(Fighter)
+        .join(Fight,
+              or_(
+                  Fight.fighter1_id == Fighter.id,
+                  Fight.fighter2_id == Fighter.id
+              )
+        )
+        .join(Event, Fight.event_id == Event.id)
+        .filter(
+            Fighter.name == fighter_name,
+            Event.name == event_name,
+            Fighter.is_deleted.is_(False),
+            Fight.is_deleted.is_(False)
+        )
+        .distinct()
+        .all()
+    )

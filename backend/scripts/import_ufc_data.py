@@ -255,6 +255,7 @@ def import_data(fighters_file, nicknames_file, events_file, fights_file, stats_f
             f1_outcome, f2_outcome = parse_fight_outcome(clean_csv_value(row.get("OUTCOME")))
 
             fight_data = {
+                "bout_name": clean_csv_value(row.get("BOUT")),
                 "fighter1_id": fighter1.id,
                 "fighter2_id": fighter2.id,
                 "fighter1_outcome": f1_outcome,
