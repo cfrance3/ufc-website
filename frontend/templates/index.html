@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}Home | UFC DB{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/cards.css">
+{% endblock %}
+
+{% block content %}
+<section>
+    {% include "partials/top-cards.html" %}
+</section>
+{% endblock %}

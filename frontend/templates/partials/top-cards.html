@@ -1,0 +1,21 @@
+<div class="card-row">
+        <a class="card {% if request.url.path == '/' %}active{% endif %}" href="/">
+            <h2>Home</h2>
+        </a>
+
+        <a class="card {% if request.url.path == '/fighters' %}active{% endif %}" href="/fighters">
+            <h2>Fighters</h2>
+        </a>
+
+        <a class="card {% if request.url.path == '/fights' %}active{% endif %}" href="/fights">
+            <h2>Fights</h2>
+        </a>
+
+        <a class="card {% if request.url.path == '/events' %}active{% endif %}" href="/events">
+            <h2>Events</h2>
+        </a>
+
+        <a class="card {% if request.url.path == '/search' %}active{% endif %}" href="/search">
+            <h2>Search</h2>
+        </a>
+    </div>
