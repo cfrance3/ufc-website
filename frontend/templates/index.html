@@ -1,13 +1,38 @@
 {% extends "base.html" %}
 
-{% block title %}Home | UFC DB{% endblock %}
+{% block title %}Home | UFC Stat Tracker{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="/static/css/home.css">
 <link rel="stylesheet" href="/static/css/cards.css">
 {% endblock %}
 
 {% block content %}
 <section>
     {% include "partials/top-cards.html" %}
+</section>
+
+<section class="fight-of-the-day fight-box">
+    <h2>Fight of the Day</h2>
+    <div class="fight-card">
+        <div class="fighter fighter-left">
+            <h3>Fighter A</h3>
+            <p>10-2-0</p>
+            <p>Orthodox</p>
+        </div>
+
+        <div class="fight-stats">
+            <p>vs.</p>
+            <p>Record</p>
+            <p>Stance</p>
+        </div>
+
+        <div class="fighter fighter-right">
+            <h3>Fighter B</h3>
+            <p>8-3-1</p>
+            <p>Southpaw</p>
+        </div>
+
+    </div>
 </section>
 {% endblock %}
