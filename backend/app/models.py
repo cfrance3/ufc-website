@@ -51,6 +51,7 @@ class Fight(Base):
     method = Column(String)
     round = Column(String)
     time = Column(String)
+    title_fight = Column(Boolean, nullable=False, default=False)
     event_id = Column(Integer, ForeignKey("events.id", ondelete="CASCADE"), index=True)
 
     is_deleted = Column(Boolean, nullable=False, default=False)

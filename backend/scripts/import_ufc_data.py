@@ -1,5 +1,6 @@
 import csv
 import json
+import re
 from pathlib import Path
 from sqlalchemy.orm import Session
 from backend.app.database import SessionLocal, engine, Base
@@ -18,7 +19,7 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
         logging.FileHandler("backend/logs/import.log", encoding="utf-8"),
-        logging.StreamHandler()
+        # logging.StreamHandler()
     ]
 )
 
@@ -41,6 +42,27 @@ def normalize_name(name: str) -> str:
     name = ' '.join(name.strip().split())
     return name
 
+def normalize_weightclass(raw: str) -> str:
+    """
+    Convert raw weightclass string from fight table to standard weightclass.
+    Examples:
+        "Featherweight Bout" -> "Featherweight"
+        "UFC Light Heavyweight Title Bout" -> "Light Heavyweight"
+    """
+    if not raw:
+        return "Unknown"
+
+    # Remove 'UFC', 'Title', 'Bout', etc.
+    cleaned = re.sub(r'\b(UFC|Title|Bout|Tournament)\b', '', raw, flags=re.IGNORECASE)
+
+    # Remove extra spaces
+    cleaned = ' '.join(cleaned.split())
+
+    return cleaned
+
+def is_title_fight(bout_type: str):
+    return bool(re.search(r"\btitle\b", bout_type, re.IGNORECASE))
+    
 
 def parse_fight_outcome(outcome: str):
     outcome = outcome.upper().strip()
@@ -260,10 +282,11 @@ def import_data(fighters_file, nicknames_file, events_file, fights_file, stats_f
                 "fighter2_id": fighter2.id,
                 "fighter1_outcome": f1_outcome,
                 "fighter2_outcome": f2_outcome,
-                "weightclass": clean_csv_value(row.get("WEIGHTCLASS")),
+                "weightclass": normalize_weightclass(clean_csv_value(row.get("WEIGHTCLASS"))),
                 "method": clean_csv_value(row.get("METHOD")),
                 "round": clean_csv_value(row.get("ROUND")),
                 "time": clean_csv_value(row.get("TIME")),
+                "title_fight": is_title_fight(row.get("BOUT")),
                 "event_id": event.id
             }
             insert_fight(db, fight_data)

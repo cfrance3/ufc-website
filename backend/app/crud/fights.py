@@ -1,8 +1,10 @@
+import random
 from typing import List
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session, joinedload
 from backend.app.models import Fight, Event, Fighter
 from backend.app.crud.utils import apply_updates
+from backend.app.constants import WEIGHTCLASS_TO_WEIGHT
 
 def get_all_fights(db: Session) -> List[Fight]:
     return db.query(Fight).filter(Fight.is_deleted.is_(False)).all()
@@ -90,3 +92,56 @@ def fighter_fought_opponent_at_event(db: Session, *, fighter_url: str, opponent_
         .first()
         is not None
     )
+
+def get_fight_count(db: Session) -> int:
+    return db.query(Fight).count()
+
+def get_fight_by_offset(db: Session, offset: int):
+    return (
+        db.query(Fight)
+        .options(
+            joinedload(Fight.fighter1),
+            joinedload(Fight.fighter2),
+            joinedload(Fight.event)
+        )
+        .offset(offset)
+        .limit(1)
+        .one_or_none()
+    )
+
+def get_random_fight(db: Session, seed: int | None = None):
+    count = get_fight_count(db)
+    if count == 0:
+        return None
+    
+    rng = random.Random(seed)
+    offset = rng.randrange(count)
+
+    return get_fight_by_offset(db, offset)
+
+def get_fight_display_data(fight: Fight):
+    weight = WEIGHTCLASS_TO_WEIGHT.get(fight.weightclass, "N/A")
+
+    return {
+        "fighter1": {
+            "name": fight.fighter1.name,
+            "record": fight.fighter1.record,
+            "height": fight.fighter1.height,
+            "weight": weight,
+            "stance": fight.fighter1.stance,
+        },
+        "fighter2": {
+            "name": fight.fighter2.name,
+            "record": fight.fighter2.record,
+            "height": fight.fighter2.height,
+            "weight": weight,
+            "stance": fight.fighter2.stance,
+        },
+        "weightclass": fight.weightclass,
+        "method": fight.method,
+        "round": fight.round,
+        "time": fight.time,
+    }
+
+def get_fight_by_id(db: Session, id: int) -> Fight | None:
+    return db.query(Fight).filter(Fight.id == id).one_or_none()

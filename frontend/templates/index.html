@@ -12,27 +12,35 @@
     {% include "partials/top-cards.html" %}
 </section>
 
-<section class="fight-of-the-day fight-box">
+<section class="fight-of-the-day">
     <h2>Fight of the Day</h2>
-    <div class="fight-card">
-        <div class="fighter fighter-left">
-            <h3>Fighter A</h3>
-            <p>10-2-0</p>
-            <p>Orthodox</p>
-        </div>
+    {% if fight_of_the_day %}
+        <div class="fight-card">
+            <div class="fighter fighter-left">
+                <h3>{{ fight_of_the_day.fighter1.name }}</h3>
+                <p>{{ fight_of_the_day.fighter1.record }}</p>
+                <p>{{ fight_of_the_day.fighter1.height }}</p>
+                <p>{{ fight_of_the_day.fighter1.weight }} {% if fight_of_the_day.fighter2.weight != "Open" and fight_of_the_day.fighter2.weight != "Catch"%} lbs. {% endif %}</p>
+                <p>{{ fight_of_the_day.fighter1.stance }}</p>
+            </div>
 
-        <div class="fight-stats">
-            <p>vs.</p>
-            <p>Record</p>
-            <p>Stance</p>
-        </div>
+            <div class="fight-stats">
+                <h3>vs.</h3>
+                <p>Record</p>
+                <p>Height</p>
+                <p>Weight</p>
+                <p>Stance</p>
+            </div>
 
-        <div class="fighter fighter-right">
-            <h3>Fighter B</h3>
-            <p>8-3-1</p>
-            <p>Southpaw</p>
-        </div>
+            <div class="fighter fighter-right">
+                <h3>{{ fight_of_the_day.fighter2.name }}</h3>
+                <p>{{ fight_of_the_day.fighter2.record }}</p>
+                <p>{{ fight_of_the_day.fighter2.height }}</p>
+                <p>{{ fight_of_the_day.fighter2.weight }} {% if fight_of_the_day.fighter2.weight != "Open" and fight_of_the_day.fighter2.weight != "Catch"%} lbs. {% endif %}</p>
+                <p>{{ fight_of_the_day.fighter2.stance }}</p>
+            </div>
 
-    </div>
+        </div>
+    {% endif %}
 </section>
 {% endblock %}
