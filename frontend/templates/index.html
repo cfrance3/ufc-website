@@ -17,26 +17,35 @@
     {% if fight_of_the_day %}
         <div class="fight-card">
             <div class="fighter fighter-left">
+                {% if fight_of_the_day.title_status  in ["interim", "undisputed"] %}<h2>&nbsp;</h2>{% endif %}
                 <h3>{{ fight_of_the_day.fighter1.name }}</h3>
                 <p>{{ fight_of_the_day.fighter1.record }}</p>
                 <p>{{ fight_of_the_day.fighter1.height }}</p>
-                <p>{{ fight_of_the_day.fighter1.weight }} {% if fight_of_the_day.fighter2.weight != "Open" and fight_of_the_day.fighter2.weight != "Catch"%} lbs. {% endif %}</p>
+                <p>{{ fight_of_the_day.fighter1.weight }} {% if fight_of_the_day.fighter2.weight not in ["Open", "Catch"] %} lbs. {% endif %}</p>
                 <p>{{ fight_of_the_day.fighter1.stance }}</p>
             </div>
 
             <div class="fight-stats">
+                {% if fight_of_the_day.title_status in ["interim", "undisputed"] %}
+                    <h2>
+                        {% if fight_of_the_day.title_status == "interim" %}Interim {% endif %}
+                        Title Fight
+                    </h2>
+                {% endif %}
                 <h3>vs.</h3>
                 <p>Record</p>
                 <p>Height</p>
                 <p>Weight</p>
                 <p>Stance</p>
+                <p>{{ fight_of_the_day.title_status }}</p>
             </div>
 
             <div class="fighter fighter-right">
+                {% if fight_of_the_day.title_status  in ["interim", "undisputed"] %}<h2>&nbsp;</h2>{% endif %}
                 <h3>{{ fight_of_the_day.fighter2.name }}</h3>
                 <p>{{ fight_of_the_day.fighter2.record }}</p>
                 <p>{{ fight_of_the_day.fighter2.height }}</p>
-                <p>{{ fight_of_the_day.fighter2.weight }} {% if fight_of_the_day.fighter2.weight != "Open" and fight_of_the_day.fighter2.weight != "Catch"%} lbs. {% endif %}</p>
+                <p>{{ fight_of_the_day.fighter2.weight }} {% if fight_of_the_day.fighter2.weight not in ["Open", "Catch"] %} lbs. {% endif %}</p>
                 <p>{{ fight_of_the_day.fighter2.stance }}</p>
             </div>
 

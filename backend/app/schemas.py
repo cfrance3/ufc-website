@@ -46,7 +46,7 @@ class FightBase(BaseModel):
     method: str
     round: str
     time: str
-    title_fight: bool
+    title_status: str
 
 class FightLite(BaseModel):
     id:int

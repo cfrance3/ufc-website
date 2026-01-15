@@ -10,6 +10,8 @@ from backend.app.scraper import scrape_fighters_from_fight
 from backend.app.crud.fighters import upsert_fighter, update_fighter
 from backend.app.crud.events import upsert_event
 from backend.app.crud.fights import insert_fight
+from backend.app.models import TitleStatus
+from backend.app.constants import WEIGHTCLASS_TO_WEIGHT
 
 import logging
 
@@ -53,15 +55,28 @@ def normalize_weightclass(raw: str) -> str:
         return "Unknown"
 
     # Remove 'UFC', 'Title', 'Bout', etc.
-    cleaned = re.sub(r'\b(UFC|Title|Bout|Tournament)\b', '', raw, flags=re.IGNORECASE)
+    cleaned = re.sub(r'\b(UFC|Title|Bout)\b', '', raw, flags=re.IGNORECASE)
 
     # Remove extra spaces
-    cleaned = ' '.join(cleaned.split())
+    cleaned = ' '.join(cleaned.split()).strip()
+
+    for wc in WEIGHTCLASS_TO_WEIGHT.keys():
+        if re.search(rf'\b{wc}\b', cleaned, flags=re.IGNORECASE):
+            return wc
+        
+    return "Open Weight"
+
 
     return cleaned
 
-def is_title_fight(bout_type: str):
-    return bool(re.search(r"\btitle\b", bout_type, re.IGNORECASE))
+def get_title_status(bout_type: str):
+    if re.search(r"\binterim\b", bout_type, re.IGNORECASE) is not None:
+        return TitleStatus.INTERIM
+    elif bool(re.search(r"\btitle\b", bout_type, re.IGNORECASE)):
+        return TitleStatus.UNDISPUTED
+    else:
+        return TitleStatus.NONE
+    
     
 
 def parse_fight_outcome(outcome: str):
@@ -286,7 +301,7 @@ def import_data(fighters_file, nicknames_file, events_file, fights_file, stats_f
                 "method": clean_csv_value(row.get("METHOD")),
                 "round": clean_csv_value(row.get("ROUND")),
                 "time": clean_csv_value(row.get("TIME")),
-                "title_fight": is_title_fight(row.get("BOUT")),
+                "title_status": get_title_status(row.get("WEIGHTCLASS")),
                 "event_id": event.id
             }
             insert_fight(db, fight_data)

@@ -1,6 +1,13 @@
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from .database import Base
+from enum import Enum
+
+class TitleStatus(str, Enum):
+    NONE = "none"
+    UNDISPUTED = "undisputed"
+    INTERIM = "interim"
+    VACANT = "vacant"
 
 class Fighter(Base):
     __tablename__ = "fighters"
@@ -51,7 +58,7 @@ class Fight(Base):
     method = Column(String)
     round = Column(String)
     time = Column(String)
-    title_fight = Column(Boolean, nullable=False, default=False)
+    title_status = Column(String, nullable=False, default=TitleStatus.NONE.value)
     event_id = Column(Integer, ForeignKey("events.id", ondelete="CASCADE"), index=True)
 
     is_deleted = Column(Boolean, nullable=False, default=False)

@@ -141,6 +141,7 @@ def get_fight_display_data(fight: Fight):
         "method": fight.method,
         "round": fight.round,
         "time": fight.time,
+        "title_status": fight.title_status,
     }
 
 def get_fight_by_id(db: Session, id: int) -> Fight | None:

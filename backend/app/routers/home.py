@@ -14,7 +14,7 @@ def home(request: Request, db: Session = Depends(get_db)):
     seed = None
 
     fight_of_the_day = get_random_fight(db, seed)
-    fight_of_the_day = get_fight_by_id(db, 240)
+    fight_of_the_day = get_fight_by_id(db, 8480)
     fight_display = get_fight_display_data(fight_of_the_day)
 
     return templates.TemplateResponse(
