@@ -129,6 +129,7 @@ def get_fight_display_data(fight: Fight):
             "height": fight.fighter1.height,
             "weight": weight,
             "stance": fight.fighter1.stance,
+            "outcome": fight.fighter1_outcome
         },
         "fighter2": {
             "name": fight.fighter2.name,
@@ -136,6 +137,7 @@ def get_fight_display_data(fight: Fight):
             "height": fight.fighter2.height,
             "weight": weight,
             "stance": fight.fighter2.stance,
+            "outcome": fight.fighter2_outcome
         },
         "weightclass": fight.weightclass,
         "method": fight.method,

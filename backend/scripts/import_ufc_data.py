@@ -82,13 +82,29 @@ def get_title_status(bout_type: str):
 def parse_fight_outcome(outcome: str):
     outcome = outcome.upper().strip()
     if outcome == "W/L":
-        return "win", "loss"
+        return "W", "L"
     elif outcome == "L/W":
-        return "loss", "win"
+        return "L", "W"
     elif outcome == "D/D":
-        return "draw", "draw"
+        return "D", "D"
+    elif outcome == "NC/NC":
+        return "NC", "NC"
     else:
         return "unknown", "unknown"
+    
+def parse_record(record: str):
+    parts = record.split(",")
+
+    wld = parts[0].strip().split('-')
+    wins = int(wld[0])
+    losses = int(wld[1])
+    draws = int(wld[2])
+
+    nc_part = parts[1].strip()
+    nc = int(nc_part[:-2].strip())
+
+    return wins, losses, draws, nc
+
     
 def resolve_fighter_url(
         fighter_name: str,
@@ -309,19 +325,20 @@ def import_data(fighters_file, nicknames_file, events_file, fights_file, stats_f
             # Update fighter records
             for fighter, outcome in [(fighter1, f1_outcome), (fighter2, f2_outcome)]:
                 if not fighter.record:
-                    wins = losses = draws = 0
+                    wins = losses = draws = no_contests = 0
                 else:
-                    w, l, d = map(int, fighter.record.split('-'))
-                    wins, losses, draws = w, l, d
+                    wins, losses, draws, no_contests = parse_record(fighter.record)
 
-                if outcome == "win":
+                if outcome == "W":
                     wins += 1
-                elif outcome == "loss":
+                elif outcome == "L":
                     losses += 1
-                elif outcome == "draw":
+                elif outcome == "D":
                     draws += 1
+                elif outcome == "NC":
+                    no_contests += 1
 
-                record = f"{wins}-{losses}-{draws}"
+                record = f"{wins}-{losses}-{draws}, {no_contests}NC"
                 fighter_data = {"record": record}
                 update_fighter(db, fighter.id, fighter_data)
     db.flush()

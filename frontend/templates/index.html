@@ -23,6 +23,7 @@
                 <p>{{ fight_of_the_day.fighter1.height }}</p>
                 <p>{{ fight_of_the_day.fighter1.weight }} {% if fight_of_the_day.fighter2.weight not in ["Open", "Catch"] %} lbs. {% endif %}</p>
                 <p>{{ fight_of_the_day.fighter1.stance }}</p>
+                <p>{{ fight_of_the_day.fighter1.outcome}}</p>
             </div>
 
             <div class="fight-stats">
@@ -37,7 +38,7 @@
                 <p>Height</p>
                 <p>Weight</p>
                 <p>Stance</p>
-                <p>{{ fight_of_the_day.title_status }}</p>
+                <p>Outcome</p>
             </div>
 
             <div class="fighter fighter-right">
@@ -47,6 +48,7 @@
                 <p>{{ fight_of_the_day.fighter2.height }}</p>
                 <p>{{ fight_of_the_day.fighter2.weight }} {% if fight_of_the_day.fighter2.weight not in ["Open", "Catch"] %} lbs. {% endif %}</p>
                 <p>{{ fight_of_the_day.fighter2.stance }}</p>
+                <p>{{ fight_of_the_day.fighter2.outcome}}</p>
             </div>
 
         </div>
