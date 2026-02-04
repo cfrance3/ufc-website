@@ -7,9 +7,11 @@ from backend.app.database import SessionLocal, engine, Base
 from collections import defaultdict
 import unicodedata
 from backend.app.scraper import scrape_fighters_from_fight
-from backend.app.crud.fighters import upsert_fighter, update_fighter
-from backend.app.crud.events import upsert_event
-from backend.app.crud.fights import insert_fight
+from backend.app.crud.fighters import upsert_fighter, update_fighter, get_fighter_by_url
+from backend.app.crud.events import upsert_event, get_event_by_name
+from backend.app.crud.fights import insert_fight, get_fight_by_event_and_fighters, get_fight_by_bout_and_event_name
+from backend.app.crud.fight_stats import get_or_create_fight_stats
+from backend.app.crud.fight_stats_rounds import insert_fight_stats_round
 from backend.app.models import TitleStatus
 from backend.app.constants import WEIGHTCLASS_TO_WEIGHT
 
@@ -66,9 +68,6 @@ def normalize_weightclass(raw: str) -> str:
         
     return "Open Weight"
 
-
-    return cleaned
-
 def get_title_status(bout_type: str):
     if re.search(r"\binterim\b", bout_type, re.IGNORECASE) is not None:
         return TitleStatus.INTERIM
@@ -77,8 +76,6 @@ def get_title_status(bout_type: str):
     else:
         return TitleStatus.NONE
     
-    
-
 def parse_fight_outcome(outcome: str):
     outcome = outcome.upper().strip()
     if outcome == "W/L":
@@ -92,7 +89,7 @@ def parse_fight_outcome(outcome: str):
     else:
         return "unknown", "unknown"
     
-def parse_record(record: str):
+def parse_record(record: str) -> tuple[int, int, int, int]:
     parts = record.split(",")
 
     wld = parts[0].strip().split('-')
@@ -105,10 +102,16 @@ def parse_record(record: str):
 
     return wins, losses, draws, nc
 
+def parse_bout(bout: str) -> tuple[str, str]:
+    names = bout.split("vs.")
+    f1_name = normalize_name(names[0])
+    f2_name = normalize_name(names[1])
+    return f1_name, f2_name
+
     
 def resolve_fighter_url(
         fighter_name: str,
-        fight_url: str,
+        fight_url: str | None,
         name_to_urls: dict[str, list[str]],
         scraped_urls: dict | None,
         position: str,
@@ -131,13 +134,52 @@ def resolve_fighter_url(
         scraped_url = scraped_urls.get(position)
         if scraped_url in urls:
             return scraped_url
-        
-        logging.warning(f"Duplicate name mismatch: '{fighter_name}' on {fight_url}")
-        return None
+        else:
+            logging.warning(f"Duplicate name mismatch: '{fighter_name}' on {fight_url}")
+            logging.info(f"URL tried: {scraped_url}, URLs found: {urls}")
+            return None
     
     # Name not found
     logging.warning(f"Unknown fighter name '{fighter_name}' on {fight_url}")
     return None
+
+def parse_x_of_y(stat: str) -> tuple[int, int]:
+    if "of" not in stat:
+        return 0,0
+    x,y = stat.split("of")
+    
+    return to_int(x.strip()), to_int(y.strip())
+
+def parse_time_into_seconds(time: str) -> int:
+    if ":" not in time:
+        return 0
+    split = time.split(":")
+    m = int(split[0])
+    s = int(split[1])
+    return (m*60) + s
+
+def to_int(value):
+    if value is None:
+        return None
+
+    if isinstance(value, (int, float)):
+        return int(value)
+
+    value = str(value).strip()
+
+    if value in {"", "---", "NULL", "None"}:
+        return None
+
+    try:
+        return int(value)
+    except ValueError:
+        try:
+            return int(float(value))  # handles "0.0", "1.0"
+        except ValueError:
+            return None
+    
+def parse_round_value(value: str):
+    return re.sub(r"Round\s*", "", value)
     
 def import_data(fighters_file, nicknames_file, events_file, fights_file, stats_file):
     db: Session = SessionLocal()
@@ -318,7 +360,8 @@ def import_data(fighters_file, nicknames_file, events_file, fights_file, stats_f
                 "round": clean_csv_value(row.get("ROUND")),
                 "time": clean_csv_value(row.get("TIME")),
                 "title_status": get_title_status(row.get("WEIGHTCLASS")),
-                "event_id": event.id
+                "event_id": event.id,
+                "url": fight_url
             }
             insert_fight(db, fight_data)
 
@@ -342,6 +385,132 @@ def import_data(fighters_file, nicknames_file, events_file, fights_file, stats_f
                 fighter_data = {"record": record}
                 update_fighter(db, fighter.id, fighter_data)
     db.flush()
+
+    with open(stats_file, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            bout = clean_csv_value(row.get("BOUT"))
+            event_name = clean_csv_value(row.get("EVENT"))
+            event = get_event_by_name(db, event_name)
+            fight = get_fight_by_bout_and_event_name(db, bout, event_name)
+            fight_url = fight.url
+
+
+            f1_name, f2_name = parse_bout(bout)
+            f1 = fight.fighter1
+            f2 = fight.fighter2
+            fighter_name = normalize_name(row.get("FIGHTER"))
+            
+            if fighter_name is None:
+                logging.info(f"Fighter name is None. Inserting blank rows")
+                fight_stats1 = get_or_create_fight_stats(db, fight.id, f1.id)
+                fight_stats1_round_data = {
+                "fight_stats_id": fight_stats1.id,
+                "round_number": None,
+                "sig_strikes": None,
+                "sig_strikes_attempted": None,
+                "total_strikes": None,
+                "total_strikes_attempted": None,
+                "takedowns": None,
+                "takedowns_attempted": None,
+                "submissions_attempted": None,
+                "reversals": None,
+                "control_time_seconds": None,
+                "strikes_head": None,
+                "strikes_head_attempted": None,
+                "strikes_body": None,
+                "strikes_body_attempted": None,
+                "strikes_leg": None,
+                "strikes_leg_attempted": None,
+                "strikes_distance": None,
+                "strikes_clinch": None,
+                "strikes_ground": None,
+                "knockdowns": None,
+                "fight_stats": fight_stats1
+                }
+
+                fight_stats2 = get_or_create_fight_stats(db, fight.id, f2.id)
+                fight_stats2_round_data = {
+                "fight_stats_id": fight_stats2.id,
+                "round_number": None,
+                "sig_strikes": None,
+                "sig_strikes_attempted": None,
+                "total_strikes": None,
+                "total_strikes_attempted": None,
+                "takedowns": None,
+                "takedowns_attempted": None,
+                "submissions_attempted": None,
+                "reversals": None,
+                "control_time_seconds": None,
+                "strikes_head": None,
+                "strikes_head_attempted": None,
+                "strikes_body": None,
+                "strikes_body_attempted": None,
+                "strikes_leg": None,
+                "strikes_leg_attempted": None,
+                "strikes_distance": None,
+                "strikes_clinch": None,
+                "strikes_ground": None,
+                "knockdowns": None,
+                "fight_stats": fight_stats2
+                }
+
+                insert_fight_stats_round(db, fight_stats1_round_data)
+                insert_fight_stats_round(db, fight_stats2_round_data)
+                
+            else:
+                if fighter_name == f1_name:
+                    fighter = f1
+                elif fighter_name == f2_name:
+                    fighter = f2
+                else:
+                    logging.warning(f"Fighter {fighter_name} did not match either fighter: {f1_name}, {f2_name}")
+                    continue
+
+                fight_stats = get_or_create_fight_stats(db, fight.id, fighter.id)
+
+                round_num = to_int(parse_round_value(row.get("ROUND")))
+                sig_strikes, sig_strikes_att = parse_x_of_y(clean_csv_value(row.get("SIG.STR.")))
+                tot_strikes, tot_strikes_att = parse_x_of_y(clean_csv_value(row.get("TOTAL STR.")))
+                takedowns, takedowns_att = parse_x_of_y(clean_csv_value(row.get("TD")))
+                submissions_att = to_int(clean_csv_value(row.get("SUB.ATT")))
+                reversals = to_int(clean_csv_value(row.get("REV.")))
+                control_time_seconds = parse_time_into_seconds(clean_csv_value(row.get("CTRL")))
+                head, head_att = parse_x_of_y(clean_csv_value(row.get("HEAD")))
+                body, body_att = parse_x_of_y(clean_csv_value(row.get("BODY")))
+                leg, leg_att = parse_x_of_y(clean_csv_value(row.get("LEG")))
+                distance = parse_x_of_y(clean_csv_value(row.get("DISTANCE")))[0]
+                clinch = parse_x_of_y(clean_csv_value(row.get("CLINCH")))[0]
+                ground = parse_x_of_y(clean_csv_value(row.get("GROUND")))[0]
+                knockdowns = to_int(clean_csv_value(row.get("KD")))
+
+                fight_stats_round_data = {
+                    "fight_stats_id": fight_stats.id,
+                    "round_number": round_num,
+                    "sig_strikes": sig_strikes,
+                    "sig_strikes_attempted": sig_strikes_att,
+                    "total_strikes": tot_strikes,
+                    "total_strikes_attempted": tot_strikes_att,
+                    "takedowns": takedowns,
+                    "takedowns_attempted": takedowns_att,
+                    "submissions_attempted": submissions_att,
+                    "reversals": reversals,
+                    "control_time_seconds": control_time_seconds,
+                    "strikes_head": head,
+                    "strikes_head_attempted": head_att,
+                    "strikes_body": body,
+                    "strikes_body_attempted": body_att,
+                    "strikes_leg": leg,
+                    "strikes_leg_attempted": leg_att,
+                    "strikes_distance": distance,
+                    "strikes_clinch": clinch,
+                    "strikes_ground": ground,
+                    "knockdowns": knockdowns,
+                    "fight_stats": fight_stats
+                }
+
+                insert_fight_stats_round(db, fight_stats_round_data)  
+        
 
     output_fighter_path = Path("backend/data/scraped_fighter_name_map.json")
 

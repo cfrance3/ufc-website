@@ -1,7 +1,8 @@
 import random
 from typing import List
-from sqlalchemy import and_, or_
+from sqlalchemy import String, and_, or_
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.exc import MultipleResultsFound
 from backend.app.models import Fight, Event, Fighter
 from backend.app.crud.utils import apply_updates
 from backend.app.constants import WEIGHTCLASS_TO_WEIGHT
@@ -148,3 +149,17 @@ def get_fight_display_data(fight: Fight):
 
 def get_fight_by_id(db: Session, id: int) -> Fight | None:
     return db.query(Fight).filter(Fight.id == id).one_or_none()
+
+def get_fight_by_url(db: Session, url: String) -> Fight | None:
+    return db.query(Fight).filter(Fight.url == url).one_or_none()
+
+def get_fight_by_bout_and_event_name(db: Session, bout_name: String, event_name: String) -> Fight | None:
+    query =  db.query(Fight).join(Event, onclause=Event.id == Fight.event_id).filter(Fight.bout_name == bout_name).filter(Event.name == event_name)
+    try:
+        fight = query.one_or_none()
+    except MultipleResultsFound:
+        print(f"Multiple fights for bout: \"{bout_name}\"")
+        return query.all()
+    if fight is None:
+        print(f"No fights for bout: \"{bout_name}\"")
+    return fight

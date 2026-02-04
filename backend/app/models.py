@@ -49,6 +49,7 @@ class Fight(Base):
     __immutable_fields__ = {"id", "fighter1_id", "fighter2_id", "event_id"}
 
     id = Column(Integer, primary_key=True, index=True)
+    url = Column(String, nullable=False)
     bout_name = Column(String, nullable=False)
     fighter1_id = Column(Integer, ForeignKey("fighters.id", ondelete="CASCADE"), index=True)
     fighter2_id = Column(Integer, ForeignKey("fighters.id", ondelete="CASCADE"), index=True)
@@ -90,7 +91,7 @@ class FightStatsRound(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     fight_stats_id = Column(Integer, ForeignKey("fight_stats.id", ondelete="CASCADE"), nullable=False)
-    round_number = Column(Integer, nullable=False)
+    round_number = Column(Integer, nullable=True)
 
     sig_strikes = Column(Integer, nullable=True)
     sig_strikes_attempted = Column(Integer, nullable=True)
